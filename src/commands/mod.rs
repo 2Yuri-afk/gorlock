@@ -1,6 +1,10 @@
 pub mod yt_dlp;
+pub mod fast_fetch;
+pub mod parallel_processor;
 
 pub use yt_dlp::*;
+pub use fast_fetch::*;
+pub use parallel_processor::*;
 
 use anyhow::Result;
 use std::collections::HashMap;

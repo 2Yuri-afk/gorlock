@@ -12,6 +12,7 @@ use std::{
 use tokio::{sync::mpsc, time};
 
 mod app_state;
+mod cache;
 mod commands;
 mod ui;
 
@@ -31,10 +32,10 @@ async fn main() -> Result<()> {
     let mut app_state = AppState::default();
     let mut app = App::default();
 
-    // Create communication channels
-    let (input_tx, mut input_rx) = mpsc::unbounded_channel::<InputEvent>();
-    let (app_tx, mut app_rx) = mpsc::unbounded_channel::<AppEvent>();
-    let (action_tx, mut action_rx) = mpsc::unbounded_channel::<DownloadAction>();
+    // Use bounded channels for better backpressure and memory control
+    let (input_tx, mut input_rx) = mpsc::channel::<InputEvent>(32);
+    let (app_tx, mut app_rx) = mpsc::channel::<AppEvent>(256);
+    let (action_tx, mut action_rx) = mpsc::channel::<DownloadAction>(128);
 
     // Spawn input handling task
     let input_task = {
@@ -51,17 +52,17 @@ async fn main() -> Result<()> {
                 if crossterm::event::poll(timeout).unwrap_or(false) {
                     match event::read().unwrap() {
                         Event::Key(key) => {
-                            if input_tx.send(InputEvent::Key(key)).is_err() {
+                            if input_tx.send(InputEvent::Key(key)).await.is_err() {
                                 break;
                             }
                         }
                         Event::Mouse(mouse) => {
-                            if input_tx.send(InputEvent::Mouse(mouse)).is_err() {
+                            if input_tx.send(InputEvent::Mouse(mouse)).await.is_err() {
                                 break;
                             }
                         }
                         Event::Resize(w, h) => {
-                            if input_tx.send(InputEvent::Resize(w, h)).is_err() {
+                            if input_tx.send(InputEvent::Resize(w, h)).await.is_err() {
                                 break;
                             }
                         }
@@ -78,16 +79,21 @@ async fn main() -> Result<()> {
 
     // Download controller is now handled directly in the main event loop
 
-    // Main event loop
+    // Event-driven rendering with smart updates
+    let mut needs_render = true;
     let mut last_render = Instant::now();
-    let render_rate = Duration::from_millis(16); // ~60 FPS
+    let min_render_interval = Duration::from_millis(16); // Cap at 60 FPS
+    let idle_render_interval = Duration::from_millis(500); // 2 FPS when idle
+    let mut last_progress_update = Instant::now();
+    let progress_throttle = Duration::from_millis(100); // Throttle progress to 10 FPS
 
     let result = loop {
         tokio::select! {
-            // Handle input events
+            // Handle input events (highest priority)
             input_event = input_rx.recv() => {
                 if let Some(event) = input_event {
                     handle_input(event, &mut app_state, &action_tx).await;
+                    needs_render = true; // Input always triggers render
                     if app_state.should_quit {
                         break Ok(());
                     }
@@ -98,23 +104,48 @@ async fn main() -> Result<()> {
             action = action_rx.recv() => {
                 if let Some(action) = action {
                     handle_download_action(action, &mut app_state, &app_tx).await;
+                    needs_render = true; // Actions trigger render
                 }
             }
 
-            // Handle application events
+            // Handle application events with progress throttling
             app_event = app_rx.recv() => {
                 if let Some(event) = app_event {
-                    handle_app_event(event, &mut app_state).await;
+                    // Throttle progress updates
+                    let should_process = match &event {
+                        AppEvent::ProgressUpdate { .. } => {
+                            if last_progress_update.elapsed() >= progress_throttle {
+                                last_progress_update = Instant::now();
+                                true
+                            } else {
+                                false // Skip this progress update
+                            }
+                        }
+                        _ => true // Process all other events immediately
+                    };
+                    
+                    if should_process {
+                        handle_app_event(event, &mut app_state).await;
+                        needs_render = true;
+                    }
+                    
                     if app_state.should_quit {
                         break Ok(());
                     }
                 }
             }
 
-            // Render UI at ~60 FPS
-            _ = time::sleep_until(time::Instant::from_std(last_render + render_rate)) => {
-                terminal.draw(|f| app.render(f, &app_state))?;
-                last_render = Instant::now();
+            // Event-driven rendering with idle fallback
+            _ = tokio::time::sleep(Duration::from_millis(1)) => {
+                let elapsed = last_render.elapsed();
+                let should_render = needs_render && elapsed >= min_render_interval
+                    || elapsed >= idle_render_interval; // Heartbeat render
+                
+                if should_render {
+                    terminal.draw(|f| app.render(f, &app_state))?;
+                    last_render = Instant::now();
+                    needs_render = false;
+                }
             }
         }
     };
@@ -138,7 +169,7 @@ async fn main() -> Result<()> {
 async fn handle_download_action(
     action: DownloadAction,
     state: &mut AppState,
-    app_tx: &mpsc::UnboundedSender<AppEvent>,
+    app_tx: &mpsc::Sender<AppEvent>,
 ) {
     match action {
         DownloadAction::AddUrl(url) => {
@@ -153,20 +184,20 @@ async fn handle_download_action(
                             // It's a playlist with multiple entries - queue them all
                             let _ = app_tx_clone.send(AppEvent::PlaylistDetected {
                                 entries,
-                            });
+                            }).await;
                         } else if let Some((entry_url, title, duration)) = entries.first() {
                             // Single entry - treat as regular video
                             let _ = app_tx_clone.send(AppEvent::SingleVideoDetected {
                                 url: entry_url.clone(),
                                 title: title.clone(),
                                 duration: duration.clone(),
-                            });
+                            }).await;
                         }
                     }
                     Err(e) => {
                         let _ = app_tx_clone.send(AppEvent::PlaylistFetchFailed {
                             error: format!("Failed to process URL: {}", e),
-                        });
+                        }).await;
                     }
                 }
             });
@@ -190,7 +221,7 @@ async fn handle_download_action(
                             let app_tx = app_tx_clone.clone();
                             tokio::spawn(async move {
                                 while let Some(progress) = progress_rx.recv().await {
-                                    let _ = app_tx.send(AppEvent::ProgressUpdate { id, progress });
+                                    let _ = app_tx.send(AppEvent::ProgressUpdate { id, progress }).await;
                                 }
                             })
                         };
@@ -205,13 +236,13 @@ async fn handle_download_action(
                         .await
                         {
                             Ok(()) => {
-                                let _ = app_tx_clone.send(AppEvent::DownloadCompleted { id });
+                                let _ = app_tx_clone.send(AppEvent::DownloadCompleted { id }).await;
                             }
                             Err(e) => {
                                 let _ = app_tx_clone.send(AppEvent::DownloadFailed {
                                     id,
                                     error: format!("Download failed: {}", e),
-                                });
+                                }).await;
                             }
                         }
 
@@ -256,13 +287,13 @@ async fn handle_download_action(
                                 formats,
                                 title,
                                 duration,
-                            });
+                            }).await;
                         }
                         Err(e) => {
                             let _ = app_tx_clone.send(AppEvent::FormatsFetchFailed {
                                 id,
                                 error: format!("Failed to fetch formats: {}", e),
-                            });
+                            }).await;
                         }
                     }
                 });

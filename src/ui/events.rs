@@ -1,13 +1,13 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tokio::sync::mpsc;
 
-use crate::app_state::{AppState, Panel, events::*};
+use crate::app_state::{AppState, Panel, DownloadStatus, events::*};
 
 /// Handle input events and update application state
 pub async fn handle_input(
     event: InputEvent,
     state: &mut AppState,
-    action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     match event {
         InputEvent::Key(key) => {
@@ -26,7 +26,7 @@ pub async fn handle_input(
 async fn handle_key_event(
     key: KeyEvent,
     state: &mut AppState,
-    action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     // Handle Ctrl-C to quit
     if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
@@ -66,7 +66,7 @@ async fn handle_key_event(
 async fn handle_input_mode(
     key: KeyEvent,
     state: &mut AppState,
-    action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     match key.code {
         KeyCode::Enter => {
@@ -75,7 +75,7 @@ async fn handle_input_mode(
                 // Set loading state before processing URL
                 state.is_loading = true;
                 state.loading_message = Some("Fetching video information...".to_string());
-                let _ = action_tx.send(DownloadAction::AddUrl(url));
+                let _ = action_tx.send(DownloadAction::AddUrl(url)).await;
                 state.url_input.clear();
             }
             state.input_mode = false;
@@ -102,7 +102,7 @@ async fn handle_input_mode(
 async fn handle_navigation_mode(
     key: KeyEvent,
     state: &mut AppState,
-    action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     match key.code {
         KeyCode::Char('q') => {
@@ -115,11 +115,15 @@ async fn handle_navigation_mode(
         KeyCode::Up | KeyCode::Char('k') => {
             if !state.queue.is_empty() && state.selected_index > 0 {
                 state.selected_index -= 1;
+                // Prefetch formats for the newly selected item if not already fetched
+                prefetch_formats_for_selected_item(state, action_tx).await;
             }
         }
         KeyCode::Down | KeyCode::Char('j') => {
             if !state.queue.is_empty() && state.selected_index < state.queue.len() - 1 {
                 state.selected_index += 1;
+                // Prefetch formats for the newly selected item if not already fetched
+                prefetch_formats_for_selected_item(state, action_tx).await;
             }
         }
         KeyCode::Tab => {
@@ -137,14 +141,14 @@ async fn handle_navigation_mode(
                         | crate::app_state::DownloadStatus::Ready
                         | crate::app_state::DownloadStatus::Failed
                 ) {
-                    let _ = action_tx.send(DownloadAction::FetchFormats(item.id));
+                    let _ = action_tx.send(DownloadAction::FetchFormats(item.id)).await;
                 }
             }
         }
         KeyCode::Char('d') => {
             if !state.queue.is_empty() {
                 let item = &state.queue[state.selected_index];
-                let _ = action_tx.send(DownloadAction::RemoveItem(item.id));
+                let _ = action_tx.send(DownloadAction::RemoveItem(item.id)).await;
 
                 // Remove from queue immediately for UI responsiveness
                 state.queue.remove(state.selected_index);
@@ -157,10 +161,10 @@ async fn handle_navigation_mode(
             if let Some(item) = state.queue.get(state.selected_index) {
                 match item.status {
                     crate::app_state::DownloadStatus::Downloading => {
-                        let _ = action_tx.send(DownloadAction::PauseDownload(item.id));
+                        let _ = action_tx.send(DownloadAction::PauseDownload(item.id)).await;
                     }
                     crate::app_state::DownloadStatus::Paused => {
-                        let _ = action_tx.send(DownloadAction::ResumeDownload(item.id));
+                        let _ = action_tx.send(DownloadAction::ResumeDownload(item.id)).await;
                     }
                     _ => {}
                 }
@@ -173,7 +177,7 @@ async fn handle_navigation_mode(
                     crate::app_state::DownloadStatus::Downloading
                         | crate::app_state::DownloadStatus::Paused
                 ) {
-                    let _ = action_tx.send(DownloadAction::CancelDownload(item.id));
+                    let _ = action_tx.send(DownloadAction::CancelDownload(item.id)).await;
                 }
             }
         }
@@ -185,7 +189,7 @@ async fn handle_navigation_mode(
 async fn handle_format_popup_input(
     key: KeyEvent,
     state: &mut AppState,
-    action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     if let Some(popup) = &mut state.format_popup {
         // Get filtered formats for navigation
@@ -227,7 +231,7 @@ async fn handle_format_popup_input(
                     }
                     
                     // Start download
-                    let _ = action_tx.send(DownloadAction::StartDownload(item_id));
+                    let _ = action_tx.send(DownloadAction::StartDownload(item_id)).await;
                 }
             }
             KeyCode::Char('t') => {
@@ -247,7 +251,7 @@ async fn handle_format_popup_input(
 async fn handle_playlist_preview_input(
     key: KeyEvent,
     state: &mut AppState,
-    _action_tx: &mpsc::UnboundedSender<DownloadAction>,
+    _action_tx: &mpsc::Sender<DownloadAction>,
 ) {
     if let Some(preview) = &mut state.playlist_preview {
         match key.code {
@@ -279,6 +283,20 @@ async fn handle_playlist_preview_input(
                 state.playlist_preview = None;
             }
             _ => {}
+        }
+    }
+}
+
+/// Prefetch formats for the selected item if needed
+async fn prefetch_formats_for_selected_item(
+    state: &AppState,
+    action_tx: &mpsc::Sender<DownloadAction>,
+) {
+    if let Some(item) = state.queue.get(state.selected_index) {
+        // Only prefetch if the item hasn't been fetched yet
+        if matches!(item.status, DownloadStatus::Pending) {
+            // Send a fetch formats action in background (non-blocking)
+            let _ = action_tx.try_send(DownloadAction::FetchFormats(item.id));
         }
     }
 }

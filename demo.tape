@@ -14,6 +14,7 @@ Set TypingSpeed 50ms
 
 # Step 1: Launch Gorlock
 Type "gorlock"
+Sleep 1s
 Enter
 Sleep 2.5s
 
@@ -23,19 +24,25 @@ Sleep 500ms
 Type "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 Sleep 500ms
 Enter
-Sleep 2.5s
+Sleep 5s
 
 # Step 3: Fetch formats
 Type "f"
-Sleep 3s
+Sleep 6s
 
 # Step 4: Navigate down twice and select
 Down
-Sleep 400ms
+Sleep 100ms
 Down
-Sleep 400ms
+Sleep 100ms
+Down
+Sleep 100ms
+Down
+Sleep 100ms
+Down
+Sleep 100ms
 Enter
-Sleep 2.5s
+Sleep 12s
 
 # Step 5: Quit
 Type "q"
