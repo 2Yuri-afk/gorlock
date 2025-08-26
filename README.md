@@ -1,30 +1,20 @@
-# Gorlock 🎬
+# Gorlock
 
-A blazing-fast, beautiful TUI for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
+A TUI wrapper for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
 
 ![Gorlock Demo](demo-preview.gif)
 
-```
-┌────────────────────────────────────────────────────┐
-│      _____ ____  ____  _     ____  ____  _  __     │
-│     /  __//  _ \/  __\/ \   /  _ \/   _\/ |/ /     │
-│     | |  _| / \||  \/|| |   | / \||  /  |   /      │
-│     | |_//| \_/||    /| |_/\| \_/||  \_ |   \      │
-│     \____\\____/\_/\_\\____/\____/\____/\_|\_\     │
-└────────────────────────────────────────────────────┘
-```
+## Features
 
-## ✨ Features
+- **Cool TUI** - Clean, modern interface with ASCII art branding
+- **Smart Format Selection** - Interactive format picker with audio-only toggle
+- **Queue Management** - Add multiple downloads and track their progress
+- **Playlist Support** - Preview and confirm playlists before downloading
+- **Real-time Progress** - Live download stats with speed, ETA, and progress bars
+- **Kinda Fast** - Built with Rust for optimal performance
+- **1000+ Sites** - Powered by yt-dlp, supports YouTube, Vimeo, Twitter, and more
 
-- 🎨 **Cool TUI** - Clean, modern interface with ASCII art branding
-- 📺 **Smart Format Selection** - Interactive format picker with audio-only toggle
-- 📋 **Queue Management** - Add multiple downloads and track their progress
-- 🎵 **Playlist Support** - Preview and confirm playlists before downloading
-- 📊 **Real-time Progress** - Live download stats with speed, ETA, and progress bars
-- ⚡ **Lightning Fast** - Built with Rust for optimal performance
-- 🌍 **1000+ Sites** - Powered by yt-dlp, supports YouTube, Vimeo, Twitter, and more
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -35,7 +25,7 @@ A blazing-fast, beautiful TUI for `yt-dlp` written in Rust. Download videos and 
 
 ```bash
 # Clone and install
-git clone https://github.com/yourusername/gorlock.git
+git clone https://github.com/2Yuri-afk/gorlock.git
 cd gorlock
 cargo install --path .
 
@@ -61,7 +51,7 @@ gl
 | `q` | Quit | Normal |
 | `Ctrl+C` | Force quit | Any time |
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### Download a single video
 1. Launch with `gl`
@@ -82,7 +72,7 @@ gl
 - Press `Enter` to add all to queue
 - Press `Esc` to cancel
 
-## 🛠️ Building from Source
+## Building from Source
 
 ```bash
 # Development build
@@ -98,7 +88,7 @@ cargo run
 cargo install --path .
 ```
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 src/
@@ -115,7 +105,7 @@ src/
     └── yt_dlp.rs       # yt-dlp integration
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Feel free to:
 
@@ -125,7 +115,7 @@ Contributions are welcome! Feel free to:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 TODO / Roadmap
+## TODO / Roadmap
 
 - [ ] Configuration file support
 - [ ] Custom output directory per download
@@ -137,7 +127,7 @@ Contributions are welcome! Feel free to:
 - [ ] Bandwidth limiting
 - [ ] Post-download actions
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details
 
