@@ -1,0 +1,33 @@
+[package]
+name = "gorlock"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yuri"]
+license = "MIT"
+description = "A beautiful TUI for yt-dlp written in Rust - download videos with style"
+readme = "README.md"
+homepage = "https://github.com/yourusername/gorlock"
+repository = "https://github.com/yourusername/gorlock"
+keywords = ["youtube", "downloader", "tui", "terminal", "yt-dlp"]
+categories = ["command-line-utilities", "multimedia"]
+
+[[bin]]
+name = "gorlock"
+path = "src/main.rs"
+
+[dependencies]
+ratatui = "0.26"
+crossterm = "0.27"
+tokio = { version = "1.37", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+anyhow = "1"
+regex = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+dirs = "5"
+image = "0.24"
+reqwest = { version = "0.11", features = ["stream"] }
