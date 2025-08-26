@@ -4,12 +4,13 @@
 # Configuration
 Output showcase.gif
 Set Shell "bash"
-Set FontSize 16
+Set FontSize 15
 Set Width 1200
-Set Height 800
-Set Padding 10
-Set Theme "Catppuccin Mocha"
-Set TypingSpeed 50ms
+Set Height 750
+Set Padding 12
+Set Theme "nord"
+Set TypingSpeed 45ms
+Set LineHeight 1.15
 
 # Clear screen and show Gorlock
 Hide
@@ -20,14 +21,14 @@ Show
 Type "gorlock" Enter
 Sleep 3s
 
-# Showcase 1: Input a URL
+# Showcase 1: Input Rick Astley URL
 Type "i"
-Sleep 500ms
-Type "https://youtu.be/example123"
-Sleep 1s
+Sleep 400ms
+Type "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+Sleep 800ms
 Screenshot input-mode.png
 Enter
-Sleep 2s
+Sleep 2.5s
 
 # Showcase 2: Navigate queue
 Down
@@ -37,23 +38,29 @@ Sleep 500ms
 
 # Showcase 3: Show format selection
 Type "f"
-Sleep 2s
+Sleep 3s
 Screenshot format-selection.png
 Sleep 1s
 
-# Navigate formats
+# Navigate through video formats
 Down
-Sleep 400ms
+Sleep 350ms
 Down
-Sleep 400ms
+Sleep 350ms
+Down
+Sleep 350ms
 
-# Toggle audio filter
+# Toggle to audio-only formats
 Type "t"
-Sleep 1s
+Sleep 1.5s
 Screenshot audio-only.png
+Down
+Sleep 400ms
 
-# Cancel format selection
-Escape
+# Select format to download
+Enter
+Sleep 3s
+Screenshot downloading.png
 Sleep 1s
 
 # Showcase 4: Switch panels
