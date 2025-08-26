@@ -26,3 +26,10 @@ downloads/
 *.tmp
 config.toml
 .env
+
+# Demo files
+*.gif
+*.mp4
+*.webm
+*.png
+!demo-preview.gif

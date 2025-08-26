@@ -1,6 +1,8 @@
 # Gorlock 🎬
 
-A cool TUI for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
+A blazing-fast, beautiful TUI for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
+
+![Gorlock Demo](demo-preview.gif)
 
 ```
 ┌────────────────────────────────────────────────────┐
