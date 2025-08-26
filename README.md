@@ -25,7 +25,7 @@ A TUI wrapper for `yt-dlp` written in Rust. Download videos and audio from YouTu
 
 ```bash
 # Clone and install
-git clone https://github.com/yourusername/gorlock.git
+git clone https://github.com/2Yuri-afk/gorlock.git
 cd gorlock
 cargo install --path .
 
