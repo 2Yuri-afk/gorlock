@@ -1,18 +1,8 @@
-# Gorlock 🎬
+# Gorlock
 
-A blazing-fast, beautiful TUI for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
+A TUI wrapper for `yt-dlp` written in Rust. Download videos and audio from YouTube and 1000+ other sites with style.
 
 ![Gorlock Demo](demo-preview.gif)
-
-```
-┌────────────────────────────────────────────────────┐
-│      _____ ____  ____  _     ____  ____  _  __     │
-│     /  __//  _ \/  __\/ \   /  _ \/   _\/ |/ /     │
-│     | |  _| / \||  \/|| |   | / \||  /  |   /      │
-│     | |_//| \_/||    /| |_/\| \_/||  \_ |   \      │
-│     \____\\____/\_/\_\\____/\____/\____/\_|\_\     │
-└────────────────────────────────────────────────────┘
-```
 
 ## ✨ Features
 
@@ -21,7 +11,7 @@ A blazing-fast, beautiful TUI for `yt-dlp` written in Rust. Download videos and 
 - 📋 **Queue Management** - Add multiple downloads and track their progress
 - 🎵 **Playlist Support** - Preview and confirm playlists before downloading
 - 📊 **Real-time Progress** - Live download stats with speed, ETA, and progress bars
-- ⚡ **Lightning Fast** - Built with Rust for optimal performance
+- ⚡ **Kinda Fast** - Built with Rust for optimal performance
 - 🌍 **1000+ Sites** - Powered by yt-dlp, supports YouTube, Vimeo, Twitter, and more
 
 ## 🚀 Quick Start
