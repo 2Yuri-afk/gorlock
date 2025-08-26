@@ -11,7 +11,8 @@ A TUI wrapper for `yt-dlp` written in Rust. Download videos and audio from YouTu
 - **Queue Management** - Add multiple downloads and track their progress
 - **Playlist Support** - Preview and confirm playlists before downloading
 - **Real-time Progress** - Live download stats with speed, ETA, and progress bars
-- **Kinda Fast** - Built with Rust for optimal performance
+- **Lightning Fast** - Event-driven rendering, smart caching, and parallel processing
+- **Cross-Platform** - Works on Linux, macOS, and Windows
 - **1000+ Sites** - Powered by yt-dlp, supports YouTube, Vimeo, Twitter, and more
 
 ## Quick Start
@@ -23,16 +24,41 @@ A TUI wrapper for `yt-dlp` written in Rust. Download videos and audio from YouTu
 
 ### Installation
 
+#### Linux/macOS
+
 ```bash
+# Install yt-dlp (if not already installed)
+# Linux: sudo apt install yt-dlp  # or your package manager
+# macOS: brew install yt-dlp
+
 # Clone and install
 git clone https://github.com/2Yuri-afk/gorlock.git
 cd gorlock
 cargo install --path .
 
-# Run with either command
+# Run
 gorlock
-# or the short alias
-gl
+```
+
+#### Windows
+
+```powershell
+# Install yt-dlp (if not already installed)
+pip install yt-dlp
+# OR download from: https://github.com/yt-dlp/yt-dlp/releases
+
+# Clone and install
+git clone https://github.com/2Yuri-afk/gorlock.git
+cd gorlock
+cargo install --path .
+
+# Run
+gorlock
+```
+
+**Note for Windows users:** Make sure yt-dlp is in your PATH. You can verify with:
+```powershell
+yt-dlp --version
 ```
 
 ## ⌨️ Keyboard Shortcuts

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyEventKind},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
@@ -52,8 +52,12 @@ async fn main() -> Result<()> {
                 if crossterm::event::poll(timeout).unwrap_or(false) {
                     match event::read().unwrap() {
                         Event::Key(key) => {
-                            if input_tx.send(InputEvent::Key(key)).await.is_err() {
-                                break;
+                            // Filter out key release events (Windows fix)
+                            // Only process Press and Repeat events
+                            if key.kind == KeyEventKind::Press || key.kind == KeyEventKind::Repeat {
+                                if input_tx.send(InputEvent::Key(key)).await.is_err() {
+                                    break;
+                                }
                             }
                         }
                         Event::Mouse(mouse) => {
